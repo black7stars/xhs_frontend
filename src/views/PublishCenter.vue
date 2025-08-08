@@ -324,76 +324,20 @@
               />
           </div>
 
+          <!-- filepath: /Users/m-m/auto_uploader/social-auto-upload/sau_frontend/src/views/PublishCenter.vue -->
           <!-- 话题输入 -->
           <div class="topic-section">
             <h3>话题</h3>
-            <div class="topic-display">
-              <div class="selected-topics">
-                <el-tag
-                  v-for="(topic, index) in tab.selectedTopics"
-                  :key="index"
-                  closable
-                  @close="removeTopic(tab, index)"
-                  class="topic-tag"
-                >
-                  #{{ topic }}
-                </el-tag>
-              </div>
-              <el-button 
-                type="primary" 
-                plain 
-                @click="openTopicDialog(tab)"
-                class="select-topic-btn"
-              >
-                添加话题
-              </el-button>
-            </div>
+            <el-input
+              v-model="tab.topics"
+              type="textarea"
+              :rows="3"
+              placeholder="请输入话题，多个话题用逗号分隔"
+              maxlength="200"
+              show-word-limit
+              class="topic-input"
+            />
           </div>
-
-          <!-- 添加话题弹窗 -->
-          <el-dialog
-            v-model="topicDialogVisible"
-            title="添加话题"
-            width="600px"
-            class="topic-dialog"
-          >
-            <div class="topic-dialog-content">
-              <!-- 自定义话题输入 -->
-              <div class="custom-topic-input">
-                <el-input
-                  v-model="customTopic"
-                  placeholder="输入自定义话题"
-                  class="custom-input"
-                >
-                  <template #prepend>#</template>
-                </el-input>
-                <el-button type="primary" @click="addCustomTopic">添加</el-button>
-              </div>
-
-              <!-- 推荐话题 -->
-              <div class="recommended-topics">
-                <h4>推荐话题</h4>
-                <div class="topic-grid">
-                  <el-button
-                    v-for="topic in recommendedTopics"
-                    :key="topic"
-                    :type="currentTab?.selectedTopics?.includes(topic) ? 'primary' : 'default'"
-                    @click="toggleRecommendedTopic(topic)"
-                    class="topic-btn"
-                  >
-                    {{ topic }}
-                  </el-button>
-                </div>
-              </div>
-            </div>
-
-            <template #footer>
-              <div class="dialog-footer">
-                <el-button @click="topicDialogVisible = false">取消</el-button>
-                <el-button type="primary" @click="confirmTopicSelection">确定</el-button>
-              </div>
-            </template>
-          </el-dialog>
 
           <!-- 定时发布 -->
           <div class="schedule-section">
@@ -515,7 +459,7 @@ const tabs = reactive([
     selectedPlatform: 1, // 选中的平台（单选）
     title: '',
     content: '', // 正文内容
-    selectedTopics: [], // 话题列表（不带#号）
+    topics: '', // 话题内容，用户输入的字符串
     scheduleEnabled: false, // 定时发布开关
     videosPerDay: 1, // 每天发布视频数量
     dailyTimes: ['10:00'], // 每天发布时间点列表
@@ -758,7 +702,7 @@ const confirmPublish = async (tab) => {
       type: tab.selectedPlatform,
       title: tab.title,
       content: tab.content, //正文内容
-      tags: tab.selectedTopics, // 不带#号的话题列表
+      tags: tab.topics.split(',').map(topic => topic.trim()), // 将话题字符串转换为数组
       fileList: tab.fileList.map(file => file.path), // 只发送文件路径
       accountList: tab.selectedAccounts.map(accountId => {
         const account = accountStore.accounts.find(acc => acc.id === accountId)
@@ -1156,11 +1100,19 @@ const batchPublish = async () => {
         .schedule-section {
           margin-bottom: 30px;
         }
-        
+
         .content-section {
           margin-bottom: 30px;
 
           .content-input {
+            max-width: 600px;
+          }
+        }
+
+        .topic-section {
+          margin-bottom: 30px;
+
+          .topic-input {
             max-width: 600px;
           }
         }
