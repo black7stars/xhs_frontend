@@ -453,18 +453,18 @@ const tabs = reactive([
   {
     name: 'tab1',
     label: '发布1',
-    fileList: [], // 后端返回的文件名列表
-    displayFileList: [], // 用于显示的文件列表
-    selectedAccounts: [], // 选中的账号ID列表
-    selectedPlatform: 1, // 选中的平台（单选）
+    fileList: [],
+    displayFileList: [],
+    selectedAccounts: [],
+    selectedPlatform: 1,
     title: '',
-    content: '', // 正文内容
+    content: '',
     topics: '', // 话题内容，用户输入的字符串
-    scheduleEnabled: false, // 定时发布开关
-    videosPerDay: 1, // 每天发布视频数量
-    dailyTimes: ['10:00'], // 每天发布时间点列表
-    startDays: 0, // 从今天开始计算的发布天数，0表示明天，1表示后天
-    publishStatus: null // 发布状态，包含message和type
+    scheduleEnabled: false,
+    videosPerDay: 1,
+    dailyTimes: ['10:00'],
+    startDays: 0,
+    publishStatus: null
   }
 ])
 
@@ -488,17 +488,6 @@ const availableAccounts = computed(() => {
   return currentPlatform ? accountStore.accounts.filter(acc => acc.platform === currentPlatform) : []
 })
 
-// 话题相关状态
-const topicDialogVisible = ref(false)
-const customTopic = ref('')
-
-// 推荐话题列表
-const recommendedTopics = [
-  '游戏', '电影', '音乐', '美食', '旅行', '文化',
-  '科技', '生活', '娱乐', '体育', '教育', '艺术',
-  '健康', '时尚', '美妆', '摄影', '宠物', '汽车'
-]
-
 // 添加新tab
 const addTab = () => {
   tabCounter++
@@ -510,7 +499,6 @@ const addTab = () => {
     selectedAccounts: [],
     selectedPlatform: 1,
     title: '',
-    selectedTopics: [],
     scheduleEnabled: false,
     videosPerDay: 1,
     dailyTimes: ['10:00'],
@@ -586,51 +574,12 @@ const removeFile = (tab, index) => {
   ElMessage.success('文件删除成功')
 }
 
-// 话题相关方法
-// 打开添加话题弹窗
-const openTopicDialog = (tab) => {
-  currentTab.value = tab
-  topicDialogVisible.value = true
-}
-
-// 添加自定义话题
-const addCustomTopic = () => {
-  if (!customTopic.value.trim()) {
-    ElMessage.warning('请输入话题内容')
-    return
-  }
-  if (currentTab.value && !currentTab.value.selectedTopics.includes(customTopic.value.trim())) {
-    currentTab.value.selectedTopics.push(customTopic.value.trim())
-    customTopic.value = ''
-    ElMessage.success('话题添加成功')
-  } else {
-    ElMessage.warning('话题已存在')
-  }
-}
-
-// 切换推荐话题
-const toggleRecommendedTopic = (topic) => {
-  if (!currentTab.value) return
-  
-  const index = currentTab.value.selectedTopics.indexOf(topic)
-  if (index > -1) {
-    currentTab.value.selectedTopics.splice(index, 1)
-  } else {
-    currentTab.value.selectedTopics.push(topic)
-  }
-}
-
-// 删除话题
-const removeTopic = (tab, index) => {
-  tab.selectedTopics.splice(index, 1)
-}
-
-// 确认添加话题
-const confirmTopicSelection = () => {
-  topicDialogVisible.value = false
-  customTopic.value = ''
-  currentTab.value = null
-  ElMessage.success('添加话题完成')
+//话题字符串处理
+const parseTopics = (topics) => {
+  return topics
+    .split(',')
+    .map(topic => topic.trim())
+    .filter(topic => topic) // 去除空字符串
 }
 
 // 账号选择相关方法
@@ -701,18 +650,18 @@ const confirmPublish = async (tab) => {
     const publishData = {
       type: tab.selectedPlatform,
       title: tab.title,
-      content: tab.content, //正文内容
-      tags: tab.topics.split(',').map(topic => topic.trim()), // 将话题字符串转换为数组
-      fileList: tab.fileList.map(file => file.path), // 只发送文件路径
+      content: tab.content,
+      tags: parseTopics(tab.topics), // 使用工具函数处理话题
+      fileList: tab.fileList.map(file => file.path),
       accountList: tab.selectedAccounts.map(accountId => {
         const account = accountStore.accounts.find(acc => acc.id === accountId)
         return account ? account.filePath : accountId
-      }), // 发送账号的文件路径
-      enableTimer: tab.scheduleEnabled ? 1 : 0, // 是否启用定时发布，开启传1，不开启传0
-      videosPerDay: tab.scheduleEnabled ? tab.videosPerDay || 1 : 1, // 每天发布视频数量，1-55
-      dailyTimes: tab.scheduleEnabled ? tab.dailyTimes || ['10:00'] : ['10:00'], // 每天发布时间点
-      startDays: tab.scheduleEnabled ? tab.startDays || 0 : 0, // 从今天开始计算的发布天数，0表示明天，1表示后天
-      category: 0 //表示非原创
+      }),
+      enableTimer: tab.scheduleEnabled ? 1 : 0,
+      videosPerDay: tab.scheduleEnabled ? tab.videosPerDay || 1 : 1,
+      dailyTimes: tab.scheduleEnabled ? tab.dailyTimes || ['10:00'] : ['10:00'],
+      startDays: tab.scheduleEnabled ? tab.startDays || 0 : 0,
+      category: 0
     }
     
     // 调用后端发布API
@@ -735,7 +684,6 @@ const confirmPublish = async (tab) => {
         tab.fileList = []
         tab.displayFileList = []
         tab.title = ''
-        tab.selectedTopics = []
         tab.selectedAccounts = []
         tab.scheduleEnabled = false
         resolve()
