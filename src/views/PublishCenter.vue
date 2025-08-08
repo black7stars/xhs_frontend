@@ -514,6 +514,7 @@ const tabs = reactive([
     selectedAccounts: [], // 选中的账号ID列表
     selectedPlatform: 1, // 选中的平台（单选）
     title: '',
+    content: '', // 正文内容
     selectedTopics: [], // 话题列表（不带#号）
     scheduleEnabled: false, // 定时发布开关
     videosPerDay: 1, // 每天发布视频数量
@@ -736,6 +737,11 @@ const confirmPublish = async (tab) => {
       reject(new Error('请输入标题'))
       return
     }
+    if (!tab.content.trim()) {
+      ElMessage.error('请输入正文内容')
+      reject(new Error('请输入正文内容'))
+      return
+    }
     if (!tab.selectedPlatform) {
       ElMessage.error('请选择发布平台')
       reject(new Error('请选择发布平台'))
@@ -751,6 +757,7 @@ const confirmPublish = async (tab) => {
     const publishData = {
       type: tab.selectedPlatform,
       title: tab.title,
+      content: tab.content, //正文内容
       tags: tab.selectedTopics, // 不带#号的话题列表
       fileList: tab.fileList.map(file => file.path), // 只发送文件路径
       accountList: tab.selectedAccounts.map(accountId => {
@@ -1150,6 +1157,14 @@ const batchPublish = async () => {
           margin-bottom: 30px;
         }
         
+        .content-section {
+          margin-bottom: 30px;
+
+          .content-input {
+            max-width: 600px;
+          }
+        }
+
         .video-upload {
           width: 100%;
           
